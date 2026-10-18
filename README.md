@@ -10,7 +10,8 @@ A travel discovery app built with React Native and Expo that helps users explore
 - **Category Filters:** Filter destinations by Beaches, Mountains, Heritage, and Adventure.
 - **Wishlist:** Add and remove favourite destinations on a separate wishlist screen.
 - **Simple UI:** Clean design with easy navigation.
-
+- **Google Maps Integration:** Open Google Maps for a selected destination directly from the destination details screen.
+- **Persistent Wishlist:** Save and remove favourite destinations. Wishlist items remain saved even after refreshing or reopening the app using AsyncStorage.
 ## 📍 Destinations
 
 | Destination | Category |
@@ -63,12 +64,35 @@ Install Node.js and npm.
 
 ## 📸 Screenshots
 
-Add screenshots of the following screens after capturing them:
+## Screenshots
 
-- Home screen
-- Destination details
-- Search and category filters
-- Wishlist screen
+### Home Screen
+![Home Screen](screenshots/home.png)
+
+### Search and Filters
+![Search and Filters](screenshots/search.png)
+
+### Destination Details
+![Destination Details](screenshots/details.png)
+
+### Wishlist
+![Wishlist](screenshots/wishlist.png)
+
+
+## Screenshots
+
+### Home Screen
+![Home Screen](screenshots/home.png)
+
+### Search and Filters
+![Search and Filters](screenshots/search.png)
+
+### Destination Details
+![Destination Details](screenshots/details.png)
+
+### Wishlist
+![Wishlist](screenshots/wishlist.png)
+
 
 ## 📁 Project Structure
 
@@ -83,9 +107,7 @@ The app uses static destination data. Wishlist changes are managed in the app an
 
 ## 🔮 Future Improvements
 
-- Save wishlist items between app sessions.
 - Add live weather information.
-- Add map links for destinations.
 - Recommend destinations based on user preferences.
 
 ## 👩‍💻 Project
