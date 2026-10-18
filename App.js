@@ -1,5 +1,4 @@
-
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -9,7 +8,9 @@ import {
   TouchableOpacity,
   StyleSheet,
   StatusBar,
+  Linking,
 } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const GREEN = "#176B52";
 const CREAM = "#F8F7F1";
@@ -80,7 +81,7 @@ const destinations = [
     name: "Munnar",
     location: "Kerala, India",
     category: "Mountains",
-    image: "https://imgs.search.brave.com/evK0fRbCTX-UGNPkkSQMYqV7iCk7ubk8SmNU3iANUHQ/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9pbWFn/ZXMuc3F1YXJlc3Bh/Y2UtY2RuLmNvbS9j/b250ZW50L3YxLzUz/MTcyYjFiZTRiMGNj/OGE1NDAxZGI0YS8x/NTgwMDQ4MTczMDUx/LTNSVzJHTUZOTTZK/OUhFNThZQVlLL1Zp/ZXcrb2YrdGhlK091/dCtvZitUb3duK0Fj/Y29tbW9kYXRpb25z/K2luK011bm5hciwr/S2VyYWxh",
+     image: "https://imgs.search.brave.com/evK0fRbCTX-UGNPkkSQMYqV7iCk7ubk8SmNU3iANUHQ/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9pbWFn/ZXMuc3F1YXJlc3Bh/Y2UtY2RuLmNvbS9j/b250ZW50L3YxLzUz/MTcyYjFiZTRiMGNj/OGE1NDAxZGI0YS8x/NTgwMDQ4MTczMDUx/LTNSVzJHTUZOTTZK/OUhFNThZQVlLL1Zp/ZXcrb2YrdGhlK091/dCtvZitUb3duK0Fj/Y29tbW9kYXRpb25z/K2luK011bm5hciwr/S2VyYWxh",
     description:
       "Enjoy rolling tea plantations, mist-covered hills, cool mountain air and scenic viewpoints. Mattupetty Dam and Echo Point are popular stops for nature lovers.",
     bestTime: "September to March",
@@ -99,7 +100,7 @@ const destinations = [
     description:
       "Explore Rajasthan's Pink City, known for pink sandstone architecture, royal palaces, historic forts and colourful markets. Visit Hawa Mahal, Amber Fort and City Palace to experience its heritage.",
     bestTime: "October to March",
-    attractions: [
+     attractions: [
       { name: "Hawa Mahal", image: "https://imgs.search.brave.com/aMGz8FPT-jcIEpxUcCZxZg_0j0EO46KuBN607UT52LY/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9tZWRp/YS5pc3RvY2twaG90/by5jb20vaWQvMjA4/MzAxMDM4MS9waG90/by9oYXdhLW1haGFs/LmpwZz9zPTYxMng2/MTImdz0wJms9MjAm/Yz1hN09GcDFqMzZP/Y3pINU1ENV82NzNu/emNSTVY3Zl9DSmE4/OXlNOFVqeFVVPQ" },
       { name: "Amber Fort", image: "https://imgs.search.brave.com/K20MZWLzmg0YYzY_2xeoEAuswFxO0pC702f5QGSKD7A/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9kMnZi/cjgzaG55aXV4MS5j/bG91ZGZyb250Lm5l/dC9pbWFnZS85NzUw/NTAyODU3MjgvaW1h/Z2VfbXZub242aWxm/aDdvdGQxdXEyZ2Jl/ZTYwMmIvLUZXRUJQ" },
       { name: "City Palace", image: "https://imgs.search.brave.com/DI9fIc8JvQPcL2T7Q_-6tbcapUZSDReheTqUI_DULek/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly93d3cu/cGFsYWNlc29ud2hl/ZWxzLmNvbS93cC1j/b250ZW50L3VwbG9h/ZHMvMjAxMy8xMi9j/aXR5X3BhbGFjZS5q/cGc" },
@@ -115,10 +116,60 @@ export default function App() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
   const [wishlist, setWishlist] = useState([]);
+  const [wishlistLoaded, setWishlistLoaded] = useState(false);
+  const [matchCategory, setMatchCategory] = useState("Beaches");
+  const matchedDestinations = destinations.filter(
+  (destination) => destination.category === matchCategory
+);
+
+  // Load saved wishlist when the app starts.
+  useEffect(() => {
+    async function loadWishlist() {
+      try {
+        const savedWishlist = await AsyncStorage.getItem(
+          "travel-explorer-wishlist"
+        );
+
+        if (savedWishlist !== null) {
+          const parsedWishlist = JSON.parse(savedWishlist);
+
+          if (Array.isArray(parsedWishlist)) {
+            setWishlist(parsedWishlist);
+          }
+        }
+      } catch (error) {
+        console.log("Could not load wishlist:", error);
+      } finally {
+        setWishlistLoaded(true);
+      }
+    }
+
+    loadWishlist();
+  }, []);
+
+  // Save wishlist changes after the initial load.
+  useEffect(() => {
+    if (!wishlistLoaded) return;
+
+    async function saveWishlist() {
+      try {
+        await AsyncStorage.setItem(
+          "travel-explorer-wishlist",
+          JSON.stringify(wishlist)
+        );
+      } catch (error) {
+        console.log("Could not save wishlist:", error);
+      }
+    }
+
+    saveWishlist();
+  }, [wishlist, wishlistLoaded]);
 
   function toggleWishlist(id) {
     setWishlist((old) =>
-      old.includes(id) ? old.filter((item) => item !== id) : [...old, id]
+      old.includes(id)
+        ? old.filter((item) => item !== id)
+        : [...old, id]
     );
   }
 
@@ -181,6 +232,7 @@ export default function App() {
           <Text style={styles.logo}>✦</Text>
           <Text style={styles.brandName}>Travel Explorer</Text>
         </TouchableOpacity>
+
         <Text style={styles.headerLabel}>YOUR NEXT ADVENTURE</Text>
       </View>
 
@@ -228,7 +280,9 @@ export default function App() {
 
           <View style={styles.sectionHeading}>
             <Text style={styles.sectionTitle}>Popular destinations</Text>
-            <Text style={styles.count}>{visibleDestinations.length} places</Text>
+            <Text style={styles.count}>
+              {visibleDestinations.length} places
+            </Text>
           </View>
 
           <View style={styles.grid}>
@@ -238,7 +292,9 @@ export default function App() {
           </View>
 
           {visibleDestinations.length === 0 && (
-            <Text style={styles.empty}>No destinations found. Try another search.</Text>
+            <Text style={styles.empty}>
+              No destinations found. Try another search.
+            </Text>
           )}
         </ScrollView>
       )}
@@ -254,13 +310,29 @@ export default function App() {
 
           <Image source={{ uri: selected.image }} style={styles.heroImage} />
 
-          <Text style={styles.eyebrow}>{selected.category.toUpperCase()}</Text>
+          <Text style={styles.eyebrow}>
+            {selected.category.toUpperCase()}
+          </Text>
           <Text style={styles.title}>{selected.name}</Text>
           <Text style={styles.location}>📍 {selected.location}</Text>
           <Text style={styles.description}>{selected.description}</Text>
+          <TouchableOpacity
+  style={styles.saveButton}
+  onPress={() =>
+    Linking.openURL(
+      `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+        selected.name + ", " + selected.location
+      )}`
+    )
+  }
+>
+  <Text style={styles.saveButtonText}>📍 Open in Google Maps</Text>
+</TouchableOpacity>
 
           <View style={styles.bestTimeBox}>
-            <Text style={styles.bestTimeLabel}>☀️ BEST TIME TO VISIT</Text>
+            <Text style={styles.bestTimeLabel}>
+              ☀️ BEST TIME TO VISIT
+            </Text>
             <Text style={styles.bestTime}>{selected.bestTime}</Text>
           </View>
 
@@ -275,7 +347,9 @@ export default function App() {
             </Text>
           </TouchableOpacity>
 
-          <Text style={styles.sectionTitle}>Places you shouldn't miss</Text>
+          <Text style={styles.sectionTitle}>
+            Places you shouldn't miss
+          </Text>
 
           {selected.attractions.map((attraction, index) => (
             <View key={index} style={styles.attraction}>
@@ -283,7 +357,9 @@ export default function App() {
                 source={{ uri: attraction.image }}
                 style={styles.attractionImage}
               />
-              <Text style={styles.attractionName}>{attraction.name}</Text>
+              <Text style={styles.attractionName}>
+                {attraction.name}
+              </Text>
             </View>
           ))}
         </ScrollView>
@@ -306,15 +382,20 @@ export default function App() {
           ) : (
             <View style={styles.emptyBox}>
               <Text style={styles.emptyIcon}>♡</Text>
-              <Text style={styles.sectionTitle}>Your wishlist is empty</Text>
+              <Text style={styles.sectionTitle}>
+                Your wishlist is empty
+              </Text>
               <Text style={styles.subtitle}>
                 Save destinations you love and find them here.
               </Text>
+
               <TouchableOpacity
                 style={styles.saveButton}
                 onPress={() => setScreen("Home")}
               >
-                <Text style={styles.saveButtonText}>Explore destinations</Text>
+                <Text style={styles.saveButtonText}>
+                  Explore destinations
+                </Text>
               </TouchableOpacity>
             </View>
           )}
@@ -347,7 +428,11 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  app: { flex: 1, backgroundColor: CREAM, minHeight: "100vh" },
+  app: {
+    flex: 1,
+    backgroundColor: CREAM,
+    minHeight: "100vh",
+  },
   header: {
     paddingHorizontal: 24,
     paddingVertical: 18,
@@ -360,49 +445,278 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     gap: 8,
   },
-  brand: { flexDirection: "row", alignItems: "center", gap: 9 },
-  logo: { color: GREEN, fontSize: 27 },
-  brandName: { fontSize: 20, fontWeight: "800", color: GREEN },
-  headerLabel: { fontSize: 10, letterSpacing: 2, color: "#77796F" },
-  content: { padding: 24, paddingBottom: 45, width: "100%", maxWidth: 1100, alignSelf: "center" },
-  eyebrow: { color: GREEN, fontSize: 11, fontWeight: "800", letterSpacing: 2, marginTop: 12 },
-  title: { fontSize: 38, fontWeight: "800", color: "#202D27", marginTop: 9, lineHeight: 45 },
-  subtitle: { color: "#6F756F", fontSize: 15, lineHeight: 23, marginTop: 8, marginBottom: 18 },
-  search: { backgroundColor: "#FFFFFF", padding: 15, borderRadius: 13, borderWidth: 1, borderColor: "#E7E5DC", fontSize: 15, marginTop: 10 },
-  categoryRow: { marginTop: 18, marginBottom: 22, flexGrow: 0 },
-  chip: { paddingVertical: 10, paddingHorizontal: 17, backgroundColor: "#FFFFFF", borderRadius: 24, marginRight: 9, borderWidth: 1, borderColor: "#E6E4DB" },
-  activeChip: { backgroundColor: GREEN, borderColor: GREEN },
-  chipText: { color: "#5D665F", fontWeight: "600" },
-  activeChipText: { color: "#FFFFFF" },
-  sectionHeading: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 15, gap: 8 },
-  sectionTitle: { color: "#26352D", fontSize: 21, fontWeight: "800", marginBottom: 14 },
-  count: { color: "#7C817B", fontSize: 13 },
-  grid: { flexDirection: "row", flexWrap: "wrap", gap: 18 },
-  card: { width: "100%", maxWidth: 330, flexGrow: 1, flexBasis: 260, backgroundColor: "#FFFFFF", borderRadius: 17, overflow: "hidden", borderWidth: 1, borderColor: "#EAE8E0", marginBottom: 6 },
-  cardImage: { width: "100%", height: 195, backgroundColor: "#E0E6E0" },
-  heart: { position: "absolute", top: 12, right: 12, backgroundColor: "#FFFFFF", width: 38, height: 38, borderRadius: 22, alignItems: "center", justifyContent: "center" },
-  heartText: { fontSize: 25, color: GREEN },
-  cardInfo: { padding: 16, alignItems: "flex-start" },
-  placeName: { fontSize: 21, fontWeight: "800", color: "#26352D" },
-  location: { color: "#737970", fontSize: 13, marginTop: 6 },
-  categoryTag: { marginTop: 12, color: GREEN, backgroundColor: "#E9F3EC", paddingVertical: 6, paddingHorizontal: 11, borderRadius: 18, fontSize: 12, overflow: "hidden" },
-  empty: { paddingVertical: 30, color: "#6F756F" },
-  backButton: { alignSelf: "flex-start", paddingVertical: 12 },
-  backText: { color: GREEN, fontWeight: "700", fontSize: 15 },
-  heroImage: { width: "100%", height: 320, borderRadius: 18, marginTop: 10, marginBottom: 20, backgroundColor: "#E0E6E0" },
-  description: { fontSize: 16, lineHeight: 26, color: "#5D665F", marginTop: 16, marginBottom: 18 },
-  bestTimeBox: { padding: 18, backgroundColor: "#E9F3EC", borderRadius: 14, marginBottom: 20 },
-  bestTimeLabel: { color: GREEN, fontSize: 11, fontWeight: "800", letterSpacing: 1 },
-  bestTime: { color: "#26352D", fontSize: 17, fontWeight: "700", marginTop: 8 },
-  saveButton: { backgroundColor: GREEN, padding: 15, borderRadius: 12, alignItems: "center", marginBottom: 28 },
-  saveButtonText: { color: "#FFFFFF", fontWeight: "800", fontSize: 15 },
-  attraction: { flexDirection: "row", alignItems: "center", gap: 15, padding: 10, backgroundColor: "#FFFFFF", borderRadius: 14, marginBottom: 12, borderWidth: 1, borderColor: "#EAE8E0" },
-  attractionImage: { width: 100, height: 80, borderRadius: 10, backgroundColor: "#E0E6E0" },
-  attractionName: { color: "#26352D", fontSize: 16, fontWeight: "700", flexShrink: 1 },
-  emptyBox: { alignItems: "center", paddingVertical: 50, paddingHorizontal: 15 },
-  emptyIcon: { fontSize: 55, color: GREEN, marginBottom: 12 },
-  nav: { flexDirection: "row", justifyContent: "center", gap: 45, paddingVertical: 15, backgroundColor: "#FFFFFF", borderTopWidth: 1, borderTopColor: "#E7E5DC" },
-  navItem: { paddingHorizontal: 12, paddingVertical: 5 },
-  navText: { color: "#77796F", fontSize: 14, fontWeight: "600" },
-  navActive: { color: GREEN, fontSize: 14, fontWeight: "800" },
+  brand: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 9,
+  },
+  logo: {
+    color: GREEN,
+    fontSize: 27,
+  },
+  brandName: {
+    fontSize: 20,
+    fontWeight: "800",
+    color: GREEN,
+  },
+  headerLabel: {
+    fontSize: 10,
+    letterSpacing: 2,
+    color: "#77796F",
+  },
+  content: {
+    padding: 24,
+    paddingBottom: 45,
+    width: "100%",
+    maxWidth: 1100,
+    alignSelf: "center",
+  },
+  eyebrow: {
+    color: GREEN,
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 2,
+    marginTop: 12,
+  },
+  title: {
+    fontSize: 38,
+    fontWeight: "800",
+    color: "#202D27",
+    marginTop: 9,
+    lineHeight: 45,
+  },
+  subtitle: {
+    color: "#6F756F",
+    fontSize: 15,
+    lineHeight: 23,
+    marginTop: 8,
+    marginBottom: 18,
+  },
+  search: {
+    backgroundColor: "#FFFFFF",
+    padding: 15,
+    borderRadius: 13,
+    borderWidth: 1,
+    borderColor: "#E7E5DC",
+    fontSize: 15,
+    marginTop: 10,
+  },
+  categoryRow: {
+    marginTop: 18,
+    marginBottom: 22,
+    flexGrow: 0,
+  },
+  chip: {
+    paddingVertical: 10,
+    paddingHorizontal: 17,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 24,
+    marginRight: 9,
+    borderWidth: 1,
+    borderColor: "#E6E4DB",
+  },
+  activeChip: {
+    backgroundColor: GREEN,
+    borderColor: GREEN,
+  },
+  chipText: {
+    color: "#5D665F",
+    fontWeight: "600",
+  },
+  activeChipText: {
+    color: "#FFFFFF",
+  },
+  sectionHeading: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 15,
+    gap: 8,
+  },
+  sectionTitle: {
+    color: "#26352D",
+    fontSize: 21,
+    fontWeight: "800",
+    marginBottom: 14,
+  },
+  count: {
+    color: "#7C817B",
+    fontSize: 13,
+  },
+  grid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 18,
+  },
+  card: {
+    width: "100%",
+    maxWidth: 330,
+    flexGrow: 1,
+    flexBasis: 260,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 17,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "#EAE8E0",
+    marginBottom: 6,
+  },
+  cardImage: {
+    width: "100%",
+    height: 195,
+    backgroundColor: "#E0E6E0",
+  },
+  heart: {
+    position: "absolute",
+    top: 12,
+    right: 12,
+    backgroundColor: "#FFFFFF",
+    width: 38,
+    height: 38,
+    borderRadius: 22,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  heartText: {
+    fontSize: 25,
+    color: GREEN,
+  },
+  cardInfo: {
+    padding: 16,
+    alignItems: "flex-start",
+  },
+  placeName: {
+    fontSize: 21,
+    fontWeight: "800",
+    color: "#26352D",
+  },
+  location: {
+    color: "#737970",
+    fontSize: 13,
+    marginTop: 6,
+  },
+  categoryTag: {
+    marginTop: 12,
+    color: GREEN,
+    backgroundColor: "#E9F3EC",
+    paddingVertical: 6,
+    paddingHorizontal: 11,
+    borderRadius: 18,
+    fontSize: 12,
+    overflow: "hidden",
+  },
+  empty: {
+    paddingVertical: 30,
+    color: "#6F756F",
+  },
+  backButton: {
+    alignSelf: "flex-start",
+    paddingVertical: 12,
+  },
+  backText: {
+    color: GREEN,
+    fontWeight: "700",
+    fontSize: 15,
+  },
+  heroImage: {
+    width: "100%",
+    height: 320,
+    borderRadius: 18,
+    marginTop: 10,
+    marginBottom: 20,
+    backgroundColor: "#E0E6E0",
+  },
+  description: {
+    fontSize: 16,
+    lineHeight: 26,
+    color: "#5D665F",
+    marginTop: 16,
+    marginBottom: 18,
+  },
+  bestTimeBox: {
+    padding: 18,
+    backgroundColor: "#E9F3EC",
+    borderRadius: 14,
+    marginBottom: 20,
+  },
+  bestTimeLabel: {
+    color: GREEN,
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 1,
+  },
+  bestTime: {
+    color: "#26352D",
+    fontSize: 17,
+    fontWeight: "700",
+    marginTop: 8,
+  },
+  saveButton: {
+    backgroundColor: GREEN,
+    padding: 15,
+    borderRadius: 12,
+    alignItems: "center",
+    marginBottom: 28,
+  },
+  saveButtonText: {
+    color: "#FFFFFF",
+    fontWeight: "800",
+    fontSize: 15,
+  },
+  attraction: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 15,
+    padding: 10,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 14,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#EAE8E0",
+  },
+  attractionImage: {
+    width: 100,
+    height: 80,
+    borderRadius: 10,
+    backgroundColor: "#E0E6E0",
+  },
+  attractionName: {
+    color: "#26352D",
+    fontSize: 16,
+    fontWeight: "700",
+    flexShrink: 1,
+  },
+  emptyBox: {
+    alignItems: "center",
+    paddingVertical: 50,
+    paddingHorizontal: 15,
+  },
+  emptyIcon: {
+    fontSize: 55,
+    color: GREEN,
+    marginBottom: 12,
+  },
+  nav: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 45,
+    paddingVertical: 15,
+    backgroundColor: "#FFFFFF",
+    borderTopWidth: 1,
+    borderTopColor: "#E7E5DC",
+  },
+  navItem: {
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+  },
+  navText: {
+    color: "#77796F",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  navActive: {
+    color: GREEN,
+    fontSize: 14,
+    fontWeight: "800",
+  },
+  
 });
