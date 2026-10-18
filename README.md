@@ -64,7 +64,7 @@ Install Node.js and npm.
 
 ## 📸 Screenshots
 
-## Screenshots
+
 
 ### Home Screen
 ![Home Screen](screenshots/home.png)
@@ -79,19 +79,6 @@ Install Node.js and npm.
 ![Wishlist](screenshots/wishlist.png)
 
 
-## Screenshots
-
-### Home Screen
-![Home Screen](screenshots/home.png)
-
-### Search and Filters
-![Search and Filters](screenshots/search.png)
-
-### Destination Details
-![Destination Details](screenshots/details.png)
-
-### Wishlist
-![Wishlist](screenshots/wishlist.png)
 
 
 ## 📁 Project Structure
